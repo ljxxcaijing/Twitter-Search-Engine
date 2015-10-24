@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import time
 from tweepy import Stream
 from tweepy import OAuthHandler
