@@ -73,10 +73,9 @@ def visitUrl(fileName):
 			saveFile.write('\n')
 
 		#remove old file
-		os.remove(fileName)
-		saveFile.close()
 		oldFile.close()
-
+		saveFile.close()
+		os.remove(fileName)
 	return
 
 #Listener Class Override
