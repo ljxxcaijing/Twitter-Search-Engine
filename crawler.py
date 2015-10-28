@@ -52,4 +52,4 @@ auth.set_access_token(access_token_key, access_token_secret)
 
 
 twitterStream = Stream(auth, listener())
-twitterStream.filter(locations=[-180,-90,180,90]) #call the filter method to run the Stream Object
+twitterStream.filter(locations=[-180, -90, 180, 90], stall_warnings=True) #call the filter method to run the Stream Object
