@@ -39,43 +39,62 @@ def visitUrl(fileName):
 	with open(fileName) as oldFile:
 		#for each tweet
 		for line in oldFile:
-			j = yaml.safe_load(line)
-			#if links exist
-			if j['urls']:
-				urls = j['urls']
-				#for each link
-				for url in urls:
-					#get url value
-					url = url["expanded_url"]
+			try:
+				json_data = json.loads(line)
+				j = {}
+				j["created_at"] = json_data["created_at"]
+				j["name"] = json_data["user"]["name"]
+				j["text"] = json_data["text"]
+				if (json_data["coordinates"]):
+					j["location"] = json_data["coordinates"]["coordinates"]
+				else:
+					j["location"] = json_data["coordinates"]
+				j["urls"] = json_data["entities"]["urls"]
+				#new_json ["urls"] = json_data["urls"]
+				#new_json ["link"] = re.findall(r'(https?://\S+)', json_data["text"])
+				#j = json.dumps(new_json)
 
-					#check robots
-					parsed = urlparse(url)
-					robotsUrl = parsed.scheme + "://" + parsed.netloc + "/robots.txt"
-					rp.set_url(robotsUrl)
-					rp.read()
+				#j = yaml.safe_load(result)
+				#if links exist
+				if j['urls']:
+					urls = j['urls']
+					#for each link
+					for url in urls:
+						#get url value
+						url = url["expanded_url"]
 
-					if rp.can_fetch('*', url):
-						#get info from url
-						r = requests.get(url)
-						soup = BeautifulSoup(r.content, 'html.parser')
-						#append info onto json_data
-						if soup.title.string:
-							j["title"] = soup.title.string
-							print j["title"]
-						else:
-							j["title"] = None
+						#check robots
+						parsed = urlparse(url)
+						robotsUrl = parsed.scheme + "://" + parsed.netloc + "/robots.txt"
+						rp.set_url(robotsUrl)
+						rp.read()
 
-			else:	#link doesn't exist
-				j["title"] = None
-			#write line to file
-			newLine = json.dumps(j)
-			saveFile.write(newLine)
-			saveFile.write('\n')
+						if rp.can_fetch('*', url):
+							#get info from url
+							r = requests.get(url)
+							soup = BeautifulSoup(r.content, 'html.parser')
+							#append info onto json_data
+							if soup.title.string:
+								j["title"] = soup.title.string
+								#cprint j["title"]
+							else:
+								j["title"] = None
 
-		#remove old file
-		oldFile.close()
-		saveFile.close()
-		os.remove(fileName)
+				else:	#link doesn't exist
+					j["title"] = None
+				#write line to file
+				newLine = json.dumps(j)
+				saveFile.write(newLine)
+				saveFile.write('\n')
+			except BaseException, e:
+				print 'failed ondata,', str(e)
+				pass
+	#remove old file
+	oldFile.close()
+	saveFile.close()
+	os.remove(fileName)
+
+
 	return
 
 #Listener Class Override
@@ -84,24 +103,13 @@ class listener(StreamListener):
 	def on_data(self, data):
 		try:
 			global i
-			json_data = json.loads(data)
-			new_json = {}
-			new_json ["created_at"] = json_data["created_at"]
-			new_json ["name"] = json_data["user"]["name"]
-			new_json ["text"] = json_data["text"]
-			if (json_data["coordinates"]):
-				new_json ["location"] = json_data["coordinates"]["coordinates"]
-			else:
-				new_json ["location"] = json_data["coordinates"]
-			new_json ["urls"] = json_data["entities"]["urls"]
-			#new_json ["urls"] = json_data["urls"]
-			#new_json ["link"] = re.findall(r'(https?://\S+)', json_data["text"])
-			result_json = json.dumps(new_json)
+			to_json = json.loads(data)
+			res = json.dumps(to_json)
 			fileName = 'tweets/raw_tweets'+ str(i) + '.json'
 			saveFile = open(fileName, 'a')
-			saveFile.write(result_json)
+			saveFile.write(res)
 			saveFile.write('\n')
-			if (os.path.getsize(fileName) > 30000):
+			if (os.path.getsize(fileName) > 100485760):
 				saveFile.close()
 				#New thread to visit urls of tweets
 				t = threading.Thread(target=visitUrl, args=[fileName])
