@@ -3,7 +3,6 @@
 from bs4 import BeautifulSoup
 import json
 import os
-import re
 import requests
 import robotparser
 import sys
@@ -13,7 +12,6 @@ from tweepy import Stream
 from tweepy import OAuthHandler
 from tweepy.streaming import StreamListener
 from urlparse import urlparse
-import yaml
 
 i = 1
 
@@ -39,9 +37,8 @@ def visitUrl(fileName):
 				j["created_at"] = json_data["created_at"]
 				j["name"] = json_data["user"]["name"]
 				j["text"] = json_data["text"]
-
-
-				j["location"] = json_data["place"]["coordinates"]
+				j["htags"] = json_data["entities"]["hashtags"]
+				j["location"] = json_data["place"]["bounding_box"]["coordinates"]
 				j["urls"] = json_data["entities"]["urls"]
 
 				#if links exist
@@ -89,7 +86,7 @@ def visitUrl(fileName):
 #Listener Class Override
 class listener(StreamListener):
 	def __init__(self, fileSize, outputDir):
-		self.fileSize = fileSize
+		self.fileSize = int(fileSize) * 10000000
 		self.outputDir = outputDir
 		if not os.path.exists(outputDir):
 			os.makedirs(outputDir)
