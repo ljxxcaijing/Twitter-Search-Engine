@@ -6,6 +6,7 @@ import os
 import re
 import requests
 import robotparser
+import sys
 import time
 import threading
 from tweepy import Stream
@@ -14,10 +15,6 @@ from tweepy.streaming import StreamListener
 from urlparse import urlparse
 import yaml
 
-ckey = 'uaS0SBO5qIm9vQ1gPp67GRCYt'
-consumer_secret = 'rBSB0XUDTGNwbGC2XNCp1w1XmIhTcWIZANarI01k4wT87mUafg'
-access_token_key = '899074213-H30SiJX1Uff5gOJc8yeuLMD5gLPz5fkKMVtHlPod'
-access_token_secret = 'P9fqfraxKqlNO7E8clFuRZl7dqhqqgCnmaw1svUJB4WVQ'
 i = 1
 
 """
@@ -42,17 +39,11 @@ def visitUrl(fileName):
 				j["created_at"] = json_data["created_at"]
 				j["name"] = json_data["user"]["name"]
 				j["text"] = json_data["text"]
-				#if (json_data["coordinates"]):
-				#	j["location"] = json_data["coordinates"]["coordinates"]
-				#else:
 
-				#j["location"] = json_data["Places"]["coordinates"]
+
+				j["location"] = json_data["place"]["coordinates"]
 				j["urls"] = json_data["entities"]["urls"]
-				#new_json ["urls"] = json_data["urls"]
-				#new_json ["link"] = re.findall(r'(https?://\S+)', json_data["text"])
-				#j = json.dumps(new_json)
 
-				#j = yaml.safe_load(result)
 				#if links exist
 				if j['urls']:
 					urls = j['urls']
@@ -97,19 +88,22 @@ def visitUrl(fileName):
 
 #Listener Class Override
 class listener(StreamListener):
-	def __init__(self):
-		self.fileName = 'tweets/raw_tweets'+ str(i) + '.json'
-		self.saveFile = open(self.fileName, 'a')
+	def __init__(self, fileSize, outputDir):
+		self.fileSize = fileSize
+		self.outputDir = outputDir
+		if not os.path.exists(outputDir):
+			os.makedirs(outputDir)
+
 	def on_data(self, data):
 		try:
 			global i
 			to_json = json.loads(data)
 			res = json.dumps(to_json)
-			self.fileName = 'tweets/raw_tweets'+ str(i) + '.json'
+			self.fileName = os.path.join(self.outputDir, 'raw_tweets'+ str(i) + '.json')
 			self.saveFile = open(self.fileName, 'a')
 			self.saveFile.write(res)
 			self.saveFile.write('\n')
-			if (os.path.getsize(self.fileName) > 1485760):
+			if (os.path.getsize(self.fileName) > self.fileSize):
 				self.saveFile.close()
 				i += 1
 				#New thread to visit urls of tweets
@@ -126,9 +120,22 @@ class listener(StreamListener):
 	def on_error(self, status):
 		print status
 
-auth = OAuthHandler(ckey, consumer_secret) #OAuth object
-auth.set_access_token(access_token_key, access_token_secret)
+def main(argv):
+	if len(argv) != 2:
+		print "Please enter with two command line arguments: fileSize, outputFile"
+		return
+
+	ckey = 'uaS0SBO5qIm9vQ1gPp67GRCYt'
+	consumer_secret = 'rBSB0XUDTGNwbGC2XNCp1w1XmIhTcWIZANarI01k4wT87mUafg'
+	access_token_key = '899074213-H30SiJX1Uff5gOJc8yeuLMD5gLPz5fkKMVtHlPod'
+	access_token_secret = 'P9fqfraxKqlNO7E8clFuRZl7dqhqqgCnmaw1svUJB4WVQ'
+
+	auth = OAuthHandler(ckey, consumer_secret)
+	auth.set_access_token(access_token_key, access_token_secret)
+
+	twitterStream = Stream(auth, listener(argv[0], argv[1]))
+	twitterStream.filter(locations=[-180, -90, 180, 90], stall_warnings=True) #call the filter method to run the Stream Object
 
 
-twitterStream = Stream(auth, listener())
-twitterStream.filter(locations=[-180, -90, 180, 90], stall_warnings=True) #call the filter method to run the Stream Object
+if __name__ == "__main__":
+   main(sys.argv[1:])
