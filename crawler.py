@@ -19,8 +19,6 @@ consumer_secret = 'rBSB0XUDTGNwbGC2XNCp1w1XmIhTcWIZANarI01k4wT87mUafg'
 access_token_key = '899074213-H30SiJX1Uff5gOJc8yeuLMD5gLPz5fkKMVtHlPod'
 access_token_secret = 'P9fqfraxKqlNO7E8clFuRZl7dqhqqgCnmaw1svUJB4WVQ'
 i = 1
-start_time = time.time() # grabs the system time
-keyword_list = ['life'] #track list
 
 """
 visitUrl takes in fileName of raw_tweets data and creates a file
@@ -35,7 +33,6 @@ def visitUrl(fileName):
 	#create new file for visited url info
 	newName = fileName[:-5] + "_visited.json"
 	saveFile = open(newName, 'a')
-
 	with open(fileName) as oldFile:
 		#for each tweet
 		for line in oldFile:
@@ -45,10 +42,10 @@ def visitUrl(fileName):
 				j["created_at"] = json_data["created_at"]
 				j["name"] = json_data["user"]["name"]
 				j["text"] = json_data["text"]
-				if (json_data["coordinates"]):
-					j["location"] = json_data["coordinates"]["coordinates"]
-				else:
-					j["location"] = json_data["coordinates"]
+				#if (json_data["coordinates"]):
+				#	j["location"] = json_data["coordinates"]["coordinates"]
+				#else:
+				j["location"] = json_data["places"]["coordinates"]
 				j["urls"] = json_data["entities"]["urls"]
 				#new_json ["urls"] = json_data["urls"]
 				#new_json ["link"] = re.findall(r'(https?://\S+)', json_data["text"])
@@ -99,22 +96,25 @@ def visitUrl(fileName):
 
 #Listener Class Override
 class listener(StreamListener):
-
+	def __init__(self):
+		self.fileName = 'tweets/raw_tweets'+ str(i) + '.json'
+		self.saveFile = open(self.fileName, 'a')
 	def on_data(self, data):
 		try:
 			global i
 			to_json = json.loads(data)
 			res = json.dumps(to_json)
-			fileName = 'tweets/raw_tweets'+ str(i) + '.json'
-			saveFile = open(fileName, 'a')
-			saveFile.write(res)
-			saveFile.write('\n')
-			if (os.path.getsize(fileName) > 100485760):
-				saveFile.close()
-				#New thread to visit urls of tweets
-				t = threading.Thread(target=visitUrl, args=[fileName])
-				t.start()
+			self.saveFile.write(res)
+			self.saveFile.write('\n')
+			if (os.path.getsize(self.fileName) > 10485760):
+				self.saveFile.close()
 				i += 1
+				self.fileName = 'tweets/raw_tweets'+ str(i) + '.json'
+				self.saveFile = open(self.fileName, 'a')
+				#New thread to visit urls of tweets
+				t = threading.Thread(target=visitUrl, args=[self.fileName])
+				t.start()
+
 			return True
 
 		except BaseException, e:
