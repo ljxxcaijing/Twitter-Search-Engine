@@ -45,7 +45,8 @@ def visitUrl(fileName):
 				#if (json_data["coordinates"]):
 				#	j["location"] = json_data["coordinates"]["coordinates"]
 				#else:
-				j["location"] = json_data["places"]["coordinates"]
+
+				#j["location"] = json_data["Places"]["coordinates"]
 				j["urls"] = json_data["entities"]["urls"]
 				#new_json ["urls"] = json_data["urls"]
 				#new_json ["link"] = re.findall(r'(https?://\S+)', json_data["text"])
@@ -84,7 +85,7 @@ def visitUrl(fileName):
 				saveFile.write(newLine)
 				saveFile.write('\n')
 			except BaseException, e:
-				print 'failed ondata,', str(e)
+				print 'failed on visit', str(e)
 				pass
 	#remove old file
 	oldFile.close()
@@ -104,13 +105,13 @@ class listener(StreamListener):
 			global i
 			to_json = json.loads(data)
 			res = json.dumps(to_json)
+			self.fileName = 'tweets/raw_tweets'+ str(i) + '.json'
+			self.saveFile = open(self.fileName, 'a')
 			self.saveFile.write(res)
 			self.saveFile.write('\n')
-			if (os.path.getsize(self.fileName) > 10485760):
+			if (os.path.getsize(self.fileName) > 1485760):
 				self.saveFile.close()
 				i += 1
-				self.fileName = 'tweets/raw_tweets'+ str(i) + '.json'
-				self.saveFile = open(self.fileName, 'a')
 				#New thread to visit urls of tweets
 				t = threading.Thread(target=visitUrl, args=[self.fileName])
 				t.start()
