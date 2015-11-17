@@ -13,7 +13,7 @@ from tweepy import OAuthHandler
 from tweepy.streaming import StreamListener
 from urlparse import urlparse
 
-i = 1
+i = 70
 
 """
 visitUrl takes in fileName of raw_tweets data and creates a file
@@ -73,7 +73,7 @@ def visitUrl(fileName):
 				saveFile.write(newLine)
 				saveFile.write('\n')
 			except BaseException, e:
-				print 'failed on visit', str(e)
+				#print 'failed on visit', str(e)
 				pass
 	#remove old file
 	oldFile.close()
@@ -115,24 +115,26 @@ class listener(StreamListener):
 			pass
 
 	def on_error(self, status):
-		print status
+		print 'FAILED ON ERROR: ', status
 
 def main(argv):
 	if len(argv) != 2:
 		print "Please enter with two command line arguments: fileSize, outputFile"
 		return
 
-	ckey = 'uaS0SBO5qIm9vQ1gPp67GRCYt'
-	consumer_secret = 'rBSB0XUDTGNwbGC2XNCp1w1XmIhTcWIZANarI01k4wT87mUafg'
-	access_token_key = '899074213-H30SiJX1Uff5gOJc8yeuLMD5gLPz5fkKMVtHlPod'
-	access_token_secret = 'P9fqfraxKqlNO7E8clFuRZl7dqhqqgCnmaw1svUJB4WVQ'
+	ckey = 'bUovU12dSjif7vcWMOrfjkMMh'
+	consumer_secret = 'idZCztlegOdFXTGM7qolbF4n5qnUM9H8RjYVVmXMSJSplp7He5'
+	access_token_key = '899074213-EMRW02PKE7aGYcXhmNbnMLMyxrfGLXvQZd85i6mJ'
+	access_token_secret = 'BeHbdfLy56KoxmuEiY3mX0zbD5GXJnD3lT2faQzxZOczP'
 
 	auth = OAuthHandler(ckey, consumer_secret)
 	auth.set_access_token(access_token_key, access_token_secret)
-
-	twitterStream = Stream(auth, listener(argv[0], argv[1]))
-	twitterStream.filter(locations=[-180, -90, 180, 90], stall_warnings=True) #call the filter method to run the Stream Object
-
+	while True:
+		try:
+			twitterStream = Stream(auth, listener(argv[0], argv[1]))
+			twitterStream.filter(locations=[-125.0011, 24.9493, -66.9326, 49.5904], stall_warnings=True) #call the filter method to run the Stream Object
+		except:
+			continue
 
 if __name__ == "__main__":
    main(sys.argv[1:])
